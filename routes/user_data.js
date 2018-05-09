@@ -4,20 +4,20 @@ var jwt = require('jsonwebtoken');
 
 var user_db = [
     {
-        uname: "Jane", password: "305", roles: [
+        name: "Jane", password: "305", roles: [
             "manager",
             "user",
             "editor"
         ]
     },
     {
-        uname: "Mary", password: "306", roles: [
+        name: "Mary", password: "306", roles: [
             "manager",
             "user"
         ]
     },
     {
-        uname: "Suslik", password: "404", roles: [
+        name: "Suslik", password: "404", roles: [
             "manager",
             "admin",
             "editor"
@@ -26,12 +26,14 @@ var user_db = [
 ];
 
 function get_token(user, secret) {
+
     var token = jwt.sign(user, secret, { expiresIn: 2000 });
 
     return token;
 }
 
 function get_user(token, secret) {
+
     var user = jwt.verify(token, secret);
 
     return user;
@@ -41,31 +43,38 @@ function check_login(login, password) {
 
     var found_user = user_db.find(function(x){
 
-        if(x.login == login && x.password == password){
+        if(x.name == login && x.password == password){
             return true;
         } else {
             return false;
         }
-        
-        if(found_user){
-            return {
-                is_authenticated: true,
-                user: {
-                    username: found_user.name,
-                    roles: found_user.roles
-                }
-            }
-        }else{
-            return {
-                is_authenticated: false,
-                user: null
+    });
+    
+    if(found_user){
+        return {
+            is_authenticated: true,
+            user: {
+                username: found_user.name,
+                roles: found_user.roles
             }
         }
-    });
+    }else{
+        return {
+            is_authenticated: false,
+            user: null
+        }
+    }
+   
 }
 /* GET home page. */
 router.get('*', function(req, res, next) {
-  req.data = { user: {username: 'SomeUser', roles: ["R1", "ROLE2", "ROLE_3"]} }
+//   req.data = { user: {username: 'SomeUser', roles: ["R1", "ROLE2", "ROLE_3"]} }
+  var data = {};
+  var token = req.cookies["auth_token"];
+  if(token){
+      data.user = get_user(token, req.app.get('secret'));
+  }
+  req.data = data;
   next();
 });
 
